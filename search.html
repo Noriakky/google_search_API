@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja" id="top">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="format-detection" content="telephone=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="INDEX,FOLLOW" />
+<title>Google Search API</title>
+</head>
+<body>
+<h1>検索結果</h1>
+
+  <div class="st-SearchResult" id="ResultCnt"></div>
+  <div id="pager"></div>
+
+<script>
+  var url;
+  var pager;
+  var pageCount;
+  var startNum = 1;
+  var param;
+  var searchWord;
+  param = window.location.search;
+  url = window.location.href;
+  var tmp = url.split('?');
+  url = tmp[0];
+  var paramaters = tmp[1].split('&');
+  if(paramaters[0].substr(0,2) == 'q=') {
+    searchWord = paramaters[0].substring(2);
+  }
+  if(paramaters.length > 1) {
+    if(paramaters[1].substr(0,6) == 'start=') {
+      startNum = paramaters[1].substring(6);
+    }
+  }
+  
+  function hndlr(response) {
+    const parentDiv = document.getElementById("ResultCnt");
+    for (var i = 0; i < response.items.length; i++) {
+      var item = response.items[i];
+      // in production code, item.htmlTitle should have the HTML entities escaped.
+      var itemDiv = document.createElement('div');
+      itemDiv.className = "st-SearchResult_Item";
+      parentDiv.appendChild(itemDiv);
+
+      var titleDiv = document.createElement('div');
+      titleDiv.className = "st-SearchResult_Title";
+      itemDiv.appendChild(titleDiv);
+      titleDiv.innerHTML = '<a href=\"'+ item.link + '\" target=\"_blank\">' + item.title + '</a><br><small>' + item.link + '</small>';
+      
+      var contentDiv = document.createElement('div');
+      contentDiv.className = "st-SearchResult_Cnt";
+      itemDiv.appendChild(contentDiv);
+
+      var myPagemap = item.pagemap
+      var myImage = "";
+      if(myPagemap != undefined) {
+        if(myPagemap.cse_thumbnail != undefined) {
+          myImage = myPagemap.cse_thumbnail[0].src;
+          var myFig = document.createElement('figure');
+          myFig.className = "st-SearchResult_Img";
+          myFig.innerHTML = '<img src=\"'+ myImage +'\">';
+          contentDiv.appendChild(myFig);
+        }
+      }
+
+      var myTxt = document.createElement('p');
+      myTxt.className = 'st-SearchResult_Txt';
+      myTxt.textContent = item.snippet;
+      contentDiv.appendChild(myTxt);    
+    }
+
+  // pager
+  pageCount = Math.ceil(response.queries.request[0].totalResults / response.queries.request[0].count);
+  if(pageCount > 10) {
+      pageCount = 10;
+  }
+
+  pager = '<ul class=\"pagerList\">'
+
+  for(var i = 1; i <= pageCount; i++) {
+      pager += '<li><a class=\"noIcon\" href=\"'+ url + '?q=' +searchWord + '&start=' + (((i - 1)*response.queries.request[0].count) + 1) + '\">' + i + '</a></li>';
+  }
+  pager += '</ul>';
+  document.getElementById('pager').innerHTML = pager;
+}
+document.write('<script src=\"https://www.googleapis.com/customsearch/v1?key=(YOUR API KEY)&cx=(YOUR GOOGLE SEARCH ID)&q=' + searchWord + '&start=' + startNum + '&callback=hndlr\"><\/script>');
+</script>
+
+</body>
+</html>
